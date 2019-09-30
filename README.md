@@ -1,2 +1,3 @@
 # SheCodes-19-Workshops
-# Plans/out line for 8 workshops
+Plans/outline for 8 workshops
+# 1. Command line
