@@ -9,6 +9,7 @@ pip install numpy
 ```
 ## Các phần trong workshop
 - [Hình ảnh trong OpenCV](image.ipynb)
+- [Video và Camera trong OpenCV](video.ipynb)
 
 
 
