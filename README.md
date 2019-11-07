@@ -1,68 +1,83 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Workshop cho AWS
+> AWS là một dịch vụ cloud computing của Amazon
 
-## Available Scripts
+> AWS Amplify là một Javascript framework giúp sử dụng các dịch vụ AWS dễ dàng hơn
 
-In the project directory, you can run:
+## Bắt đầu
 
-### `npm start`
+```
+npm install -g @aws-amplify/cli
+amplify configure
+```
+- Specify the AWS Region: 
+- Specify the username of the new IAM user: __amplify-workshop-user__
+> Trong AWS Console, chọn __Next: Permissions__, __Next: Tags__, __Next: Review__, & __Create User__ để tạo một IAM user mới. Sau đó, trở lại command line và nhấn Enter.
+- Enter the access key of the newly created user:   
+  accessKeyId: __(<YOUR_ACCESS_KEY_ID>)__   
+  secretAccessKey:  __(<YOUR_SECRET_ACCESS_KEY>)__
+- Profile Name: __amplify-workshop-user__
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+`
+amplify init
+`
+- Enter a name for the project: __amplifyreactapp__
+- Enter a name for the environment: __dev__
+- Choose your default editor: __Visual Studio Code (or your default editor)__   
+- Please choose the type of app that you're building __javascript__   
+- What javascript framework are you using __react__   
+- Source Directory Path: __src__   
+- Distribution Directory Path: __build__   
+- Build Command: __npm run-script build__   
+- Start Command: __npm run-script start__   
+- Do you want to use an AWS profile? __Y__
+- Please choose the profile you want to use: __amplify-workshop-user__
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+## Mô tả sản phẩm
+- Cho phép người dùng đăng nhập
+- Tạo database để lưu trữ thông tin album, photo
+- Thêm và chỉnh sửa album, thêm và chỉnh sửa ảnh trong từng album
+- Dán nhãn cho từng photo
 
-### `npm test`
+## Đăng nhập và bảo mật (AWS Cognito)
+### Backend
+`
+amplify add auth
+`
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Do you want to use the default authentication and security configuration? __Defau
+lt configuration__
+- How do you want users to be able to sign in? __Username__
+- Do you want to configure advanced settings? __No, I am done.__
 
-### `npm run build`
+> `amplify add` dùng để thêm service của AWS vào app. `Auth` là dịch vụ để dăng kí, đăng nhập, quản lý người dùng và xác minh người dùng của AWS.
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+`
+amplify push
+`
+- Are you sure you want to continue? __Yes__
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+> Lệnh này để thêm những gì vừa làm vào server của AWS. Sau khi thêm service __Auth__, trong [AWS Console Management](https://console.aws.amazon.com) chọn Cognito > Manage User Pool sẽ thấy User Pool vùa tạo
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Frontend
+> Cần phải có một giao diện để người dùng có thể đăng nhập
 
-### `npm run eject`
+`
+npm install --save aws-amplify aws-amplify-react
+`
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+> Thêm vào __src/index.js__. Những dòng code dưới sẽ liên kết AWS vào app. Vì vậy phải thêm vào __src/index.js__ để đảm bảo toàn bộ app đều có thể dùng AWS.
+```js
+import Amplify from 'aws-amplify'
+import config from './aws-exports'
+Amplify.configure(config)
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+> Thêm vào __src/App.js__ thư viện `aws-amplify-react`. Đó là một thư viện có chứa một số React Component của AWS để giúp việc kết nối tới AWS được dễ dàng hơn. Higher Order Component `withAuthenticator` sẽ cung cấp một màn hình đăng nhập với đầy đủ chức năng
+```js
+import { withAuthenticator } from 'aws-amplify-react'
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+> Gói Component `App` lại bằng Component `withAuthenticator` để màn hình đăng nhập hoạt động. Sửa dòng `export default App` 
+```js
+export default withAuthenticator(App, { includeGreetings: true })
+```
