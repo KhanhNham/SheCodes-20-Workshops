@@ -377,3 +377,11 @@ class App extends Component {
 
 export default withAuthenticator(App, {includeGreetings: true});
 ```
+
+> Thêm Component `Connect` từ `aws-amplify-react` là một Component giúp Connect tới server GraphQL
+
+> Thêm `API` và `graphqlOperation` từ `aws-amplify`
+
+> Thêm Component mới: NewAlbum, AlbumsList, AlbumsDetailsLoader, AlbumDetails, AlbumsListLoader
+
+> Thêm GraphQL queries và mutations: ListAlbums, SubscribeToNewAlbums, GetAlbum
