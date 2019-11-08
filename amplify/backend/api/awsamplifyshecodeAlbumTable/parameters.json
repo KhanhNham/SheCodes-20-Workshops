@@ -1,0 +1,11 @@
+{
+    "AppSyncApiName": "awsamplifyshecodeAlbumTable",
+    "DynamoDBBillingMode": "PAY_PER_REQUEST",
+    "DynamoDBEnableServerSideEncryption": "false",
+    "AuthCognitoUserPoolId": {
+        "Fn::GetAtt": [
+            "authawsamplifyshecodesfbf6678b",
+            "Outputs.UserPoolId"
+        ]
+    }
+}
