@@ -128,7 +128,7 @@ type PhotoS3Info {
 ```
 amplify console api > GraphQL
 ```
-![GraphQL Queries Screen](GraphQL.png)
+![GraphQL Queries Screen](graphQL.png)
 > Để thực hiện Query, các bạn phải login bằng một user mà các bạn đã tạo ở phần Authentication. ClienID nằm trong __src/aws-exports.js__ phần __aws_user_pools_web_client_id__. Thử tạo một album tên First Album bằng dòng Query dưới đây
 ```graphql
 mutation {
