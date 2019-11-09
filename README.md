@@ -769,7 +769,11 @@ export default withAuthenticator(App, {includeGreetings: true});
 ## Tạo Thumbnails cho Ảnh trong S3
 > Chúng ta đặt ảnh S3 trong thư mục __uploads__. Khi có một ảnh được thêm vào thư mục sẽ kích hoạt Lambda fucntion và tạo ra một Thumbnails cho ảnh đó và lưu ngay tại thư mục __/__ để tránh bị kích hoạt Lambda vô hạn lần.
 
-> Chúng ta cũng sẽ cần thư viện `sharp` để có thể chuyển đổi những ảnh lớn thành thumbnails nhỏ hơn. `npm install --save sharp`
+> Chúng ta cũng sẽ cần thư viện `sharp` để có thể chuyển đổi những ảnh lớn thành thumbnails nhỏ hơn. Các bạn chuyển vào thư mục __amplify/backend/function/S3Triggerxxxxxxxx/src__ và chạy `npm install --save sharp` ( đối với các bạn dùng linux 64bit) hoặc với các bạn không phải thì
+```
+rm -rf node_modules/sharp
+npm install --arch=x64 --platform=linux --target=10.15.0 sharp
+```
 
 > Cần thư viện `aws-sdk` là thư viện giúp kết nối tới server AWS nhanh và nhiều chức năng hơn `aws-amplify` nhưng phức tạp hơn. Chúng ta phải dùng `aws-sdk` vì không thể dùng `aws-amplify` trong lambda function
 ```bash
@@ -778,5 +782,143 @@ npm install --save aws-sdk
 
 > Vào __amplify/backend/function/S3Triggerxxxxxxxx/src/index.js__ và chỉnh sửa thành như sau:
 ```js
+// amplify/backend/function/S3Triggerxxxxxxx/src/index.js
+
+const AWS = require('aws-sdk');
+const S3 = new AWS.S3({ signatureVersion: 'v4' });
+const DynamoDBDocClient = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'});
+const uuidv4 = require('uuid/v4');
+const Sharp = require('sharp');
+
+const THUMBNAIL_WIDTH = parseInt(process.env.THUMBNAIL_WIDTH, 10);
+const THUMBNAIL_HEIGHT = parseInt(process.env.THUMBNAIL_HEIGHT, 10);
+const DYNAMODB_PHOTOS_TABLE_NAME = process.env.DYNAMODB_PHOTOS_TABLE_NAME 
+
+function storePhotoInfo(item) {
+	const params = {
+		Item: item,
+		TableName: DYNAMODB_PHOTOS_TABLE_NAME
+	};
+	return DynamoDBDocClient.put(params).promise();
+}
+
+async function getMetadata(bucketName, key) {
+	const headResult = await S3.headObject({Bucket: bucketName, Key: key }).promise();
+	return headResult.Metadata;
+}
+
+function thumbnailKey(filename) {
+	return `public/resized/${filename}`;
+}
+
+function fullsizeKey(filename) {
+	return `public/${filename}`;
+}
+
+function makeThumbnail(photo) {
+	return Sharp(photo).resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT).toBuffer();
+}
+
+async function resize(bucketName, key) {
+	const originalPhoto = (await S3.getObject({ Bucket: bucketName, Key: key }).promise()).Body;
+	const originalPhotoName = key.replace('uploads/', '');
+	const originalPhotoDimensions = await Sharp(originalPhoto).metadata();
+
+	const thumbnail = await makeThumbnail(originalPhoto);
+
+	await Promise.all([
+		S3.putObject({
+			Body: thumbnail,
+			Bucket: bucketName,
+			Key: thumbnailKey(originalPhotoName),
+		}).promise(),
+
+		S3.copyObject({
+			Bucket: bucketName,
+			CopySource: bucketName + '/' + key,
+			Key: fullsizeKey(originalPhotoName),
+		}).promise(),
+	]);
+
+	await S3.deleteObject({
+		Bucket: bucketName,
+		Key: key
+	}).promise();
+
+	return {
+		photoId: originalPhotoName,
+		
+		thumbnail: {
+			key: thumbnailKey(originalPhotoName),
+			width: THUMBNAIL_WIDTH,
+			height: THUMBNAIL_HEIGHT
+		},
+
+		fullsize: {
+			key: fullsizeKey(originalPhotoName),
+			width: originalPhotoDimensions.width,
+			height: originalPhotoDimensions.height
+		}
+	};
+};
+
+async function processRecord(record) {
+	const bucketName = record.s3.bucket.name;
+	const key = record.s3.object.key;
+	
+	if (key.indexOf('uploads') != 0) return;
+	
+	const metadata = await getMetadata(bucketName, key);
+	const sizes = await resize(bucketName, key);    
+	const id = uuidv4();
+	const item = {
+		id: id,
+		owner: metadata.owner,
+		photoAlbumId: metadata.albumid,
+		bucket: bucketName,
+		thumbnail: sizes.thumbnail,
+		fullsize: sizes.fullsize,
+		createdAt: new Date().getTime()
+	}
+	await storePhotoInfo(item);
+}
+
+exports.handler = async (event, context, callback) => {
+	try {
+		event.Records.forEach(processRecord);
+		callback(null, { status: 'Photo Processed' });
+	}
+	catch (err) {
+		console.error(err);
+		callback(err);
+	}
+};
+```
+> Truy cập vào [AWS Console Lambda](https://console.aws.amazon.com/lambda) và chọn một hàm lambda có dạng S3Trigger
+
+![Lambda](lambda.png)
+![S3Trigger](S3Trigger.png)
+
+> Những kí hiệu bên trái ( S3 )là những service mà sẽ kích hoạt hàm lambda. Những kí hiêu bên phải ( S3, CloudWatchLogs, DynamoDB ) là những service mà hàm lambda được phép truy cập, thay đổi.
+
+> Kéo xuống dưới sẽ có phần Environment variables. Thêm vào
+```
+THUMBNAIL_HEIGHT 100
+THUMBNAIL_WIDTH 100
+DYNAMODB_PHOTOS_TABLE_NAME (<Tên của Photo Table>)
+```
+
+
+> Chúng ta phải thêm vào service DynamoDB (như trong hình đã thêm vào ) để có thể ghi vào bảng DynamoDB chưa thông tin của photo. Xem trong DynamoDB để biết thông tin về bảng Photo ( Được tạo ra khi chúng ta tạo GraphQL )
+![table](photoTable.png)
+
+> Truy cập vào https://console.aws.amazon.com/iam và chọn phần roles bên trái rồi chọn role có dạng S3Trigger
+
+![role](role.png)
+
+> Chọn add Inline Policy. Đây là những policy cho phép hàm lambda truy cập vào những service của aws. Service -> DynamoDB, Action -> Write -> PutItem, Resources -> Add Arn -> Copy ARN của Photo Table. Chọn review Policy -> Đặt tên và Save
 
 ```
+amplify push
+```
+> Khi các bạn đăng nhập vào app, các bạn sẽ có thể tạo album, up load ảnh và reload lại để có thể thấy thumbnails của nó.
