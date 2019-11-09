@@ -12,6 +12,15 @@ import Amplify, { API, Auth, graphqlOperation, Storage } from 'aws-amplify';
 import aws_exports from './aws-exports';
 Amplify.configure(aws_exports);
 
+Storage.configure({
+  AWSS3: {
+      bucket: 'aws-amplify-shecodes-bucket-photo-dev',
+      region: 'eu-west-2'//Specify the region your bucket was created in;
+  }
+});
+
+var extension = /(?:\.([^.]+))?$/;
+
 function makeComparator(key, order='asc') {
   return (a, b) => {
     if(!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) return 0; 
@@ -76,11 +85,11 @@ class S3ImageUpload extends React.Component {
     const user = await Auth.currentAuthenticatedUser();
 
     const result = await Storage.put(
-      fileName, 
+      'uploads/'+ fileName, 
       file, 
       {
-        customPrefix: { public: 'uploads/' },
-        metadata: { albumid: this.props.albumId, owner: user.username }
+        metadata: { albumid: this.props.albumId, owner: user.username },
+        contentType: 'image/' + extension.exec(file.name)[1]
       }
     );
 
@@ -125,11 +134,13 @@ class S3ImageUpload extends React.Component {
 class PhotosList extends React.Component {
   photoItems() {
     return this.props.photos.map(photo =>
-      <S3Image 
-        key={photo.thumbnail.key} 
-        imgKey={photo.thumbnail.key.replace('public/', '')} 
+      {
+        Storage.list('uploads/').then(pic => console.log('success:', pic)).catch(e => console.log(e));
+      return (<S3Image 
+        key={photo.thumbnail.key}
+        imgKey={photo.thumbnail.key.replace('public/', '')}
         style={{display: 'inline-block', 'paddingRight': '5px'}}
-      />
+      />);}
     );
   }
 

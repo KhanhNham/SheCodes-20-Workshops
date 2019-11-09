@@ -60,7 +60,7 @@
 				"Timeout": "25",
 				"Code": {
 					"S3Bucket": "amplify-aws-amplify-shecodes-dev-232235-deployment",
-					"S3Key": "amplify-builds/S3Triggercd800bc4-5158346a47366b443265-build.zip"
+					"S3Key": "amplify-builds/S3Triggercd800bc4-7a387548564b31757855-build.zip"
 				}
 			}
 		},

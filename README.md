@@ -765,3 +765,18 @@ export default withAuthenticator(App, {includeGreetings: true});
 > Thêm Component S3ImageUpload và PhotosList
 
 > Thêm PhotosList vào AlbumDetails
+
+## Tạo Thumbnails cho Ảnh trong S3
+> Chúng ta đặt ảnh S3 trong thư mục __uploads__. Khi có một ảnh được thêm vào thư mục sẽ kích hoạt Lambda fucntion và tạo ra một Thumbnails cho ảnh đó và lưu ngay tại thư mục __/__ để tránh bị kích hoạt Lambda vô hạn lần.
+
+> Chúng ta cũng sẽ cần thư viện `sharp` để có thể chuyển đổi những ảnh lớn thành thumbnails nhỏ hơn. `npm install --save sharp`
+
+> Cần thư viện `aws-sdk` là thư viện giúp kết nối tới server AWS nhanh và nhiều chức năng hơn `aws-amplify` nhưng phức tạp hơn. Chúng ta phải dùng `aws-sdk` vì không thể dùng `aws-amplify` trong lambda function
+```bash
+npm install --save aws-sdk
+```
+
+> Vào __amplify/backend/function/S3Triggerxxxxxxxx/src/index.js__ và chỉnh sửa thành như sau:
+```js
+
+```
