@@ -1,4 +1,4 @@
-# SheCodes-19-Workshops
+# SheCodes-20-Workshops
 ## 1. OpenCV 
 ## 2. Basic mobile app
 ## 3. Basic web app
