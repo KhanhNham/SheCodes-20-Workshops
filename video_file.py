@@ -6,8 +6,10 @@ video = cv2.VideoCapture('res/sample_video.mp4') # Video source là video trong 
 cv2.namedWindow('video')
 
 while(video.isOpened()):
+
     # capture frame by frame
     # read() returns a bool (True/False). If frame is read correctly, it will be True
+
     ret, frame = video.read()
     if ret == False: # kiểm tra đã tới cuối video hay chưa
         break
