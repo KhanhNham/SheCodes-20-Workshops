@@ -1,6 +1,16 @@
-# SheCodes-20-Workshops
-## 1. OpenCV 
-## 2. Basic mobile app
-## 3. Basic web app
-## 4. Chatbot
+# OpenCV
+## Yêu cầu
+- python 3.7
+- Webcam
+- Các thư viện cần có
+```
+pip install opencv-python
+pip install numpy
+```
+## Các phần trong workshop
+- [Hình ảnh trong OpenCV](image.ipynb)
+- [Video và Camera trong OpenCV](video.ipynb)
+- [OpenCV cơ bản](basic.ipynb)
 
+
+# SheCodes-OpenCV
